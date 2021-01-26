@@ -1,4 +1,5 @@
 #  coding: utf-8 
+import os
 import socketserver
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
@@ -28,11 +29,54 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        req = self.data.decode().split("\r\n")[0].split()
+        if req:
+            req_type = req[0]
+            req_addr = req[1]
+        else: 
+            req_type = ""
+        if req_type == "GET":
+            if req_addr.endswith("/"):
+                path = os.getcwd() + "/www" + req_addr + "index.html"
+            elif req_addr == "/deep":
+                self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n")
+                self.request.sendall(b"Location: http://127.0.0.1:8080/deep/\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"<html><body>Page Moved Permanently</body></html>\n")
+            else:
+                path = os.getcwd() + "/www" + req_addr
+            try:
+                if req_addr.startswith("/.."):
+                    raise Exception
+                filetype = path.split(".")[1]
+                with open(path , 'rb') as f:
+                    self.request.sendall(b"HTTP/1.1 200 OK\n")
+                    self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n\n', 'utf-8'))
+                    for line in f.readlines():
+                        self.request.sendall((line))
+        
+            except IOError:
+                self.request.sendall(b"HTTP/1.1 404 Not Found\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"<html><body>Page Not Found</body></html>\n")
+            except IndexError:
+                self.request.sendall(b"HTTP/1.1 404 Not Found\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"<html><body>Wrong Name</body></html>\n")
+            except Exception:
+                self.request.sendall(b"HTTP/1.1 404 Not Found\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"<html><body>Directory Not Allowed</body></html>\n")
+            
+
+        else:
+            self.request.sendall(b"HTTP/1.1 405 Method Not Allowed\n")
+            self.request.sendall(b"Content-Type: text/html \n\n")
+            self.request.sendall(b"<html><body>Method Not Allowed</body></html>\n")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
