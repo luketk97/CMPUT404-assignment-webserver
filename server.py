@@ -58,6 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n\n', 'utf-8'))
                     for line in f.readlines():
                         self.request.sendall((line))
+                    f.close()
         
             except IOError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
