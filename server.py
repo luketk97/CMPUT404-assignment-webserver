@@ -46,11 +46,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n")
                 self.request.sendall(b"Location: http://127.0.0.1:8080/deep/\n")
                 self.request.sendall(b"Content-Type: text/html \n\n")
-                self.request.sendall(b"<html><body>Page Moved Permanently</body></html>\n")
+                self.request.sendall(b"<html><body>Page Moved Permanently http://127.0.0.1:8080/deep/</body></html>\n")
             else:
                 path = os.getcwd() + "/www" + req_addr
             try:
-                if req_addr.startswith("/.."):
+                if "/../" in req_addr:
                     raise Exception
                 filetype = path.split(".")[1]
                 with open(path , 'rb') as f:
@@ -63,15 +63,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
             except IOError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
                 self.request.sendall(b"Content-Type: text/html \n\n")
-                self.request.sendall(b"<html><body>Page Not Found</body></html>\n")
+                self.request.sendall(b"<html><body>404 Page Not Found</body></html>\n")
             except IndexError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
                 self.request.sendall(b"Content-Type: text/html \n\n")
-                self.request.sendall(b"<html><body>Wrong Name</body></html>\n")
+                self.request.sendall(b"<html><body>404 Wrong Name</body></html>\n")
             except Exception:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
                 self.request.sendall(b"Content-Type: text/html \n\n")
-                self.request.sendall(b"<html><body>Directory Not Allowed</body></html>\n")
+                self.request.sendall(b"<html><body>404 Directory Not Allowed</body></html>\n")
             
 
         else:
