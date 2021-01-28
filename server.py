@@ -37,7 +37,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if req:
             req_type = req[0]
             req_addr = req[1]
-        else: 
+        else:
             req_type = ""
         if req_type == "GET":
             if req_addr.endswith("/"):
@@ -74,7 +74,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.request.sendall(b"<html><body>404 Directory Not Allowed</body></html>\n")
             
 
-        else:
+        elif req and req_type != "GET":
             self.request.sendall(b"HTTP/1.1 405 Method Not Allowed\n")
             self.request.sendall(b"Content-Type: text/html \n\n")
             self.request.sendall(b"<html><body>Method Not Allowed</body></html>\n")
