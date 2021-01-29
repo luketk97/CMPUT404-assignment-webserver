@@ -48,8 +48,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             elif req_addr == "/deep":
                 self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n")
                 self.request.sendall(b"Location: http://127.0.0.1:8080/deep/\n")
-                self.request.sendall(b"Content-Type: text/html \n")
-                self.request.sendall(b"Connection: close \n\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
                 self.request.sendall(b"<html><body>Page Moved Permanently http://127.0.0.1:8080/deep/</body></html>\n")
             #else, return request in /www directory
             else:
@@ -63,35 +62,30 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 with open(path , 'rb') as f:
                     #sends a 200 http response header with content type header and body
                     self.request.sendall(b"HTTP/1.1 200 OK\n")
-                    self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n', 'utf-8'))
-                    self.request.sendall(b"Connection: close \n\n")
+                    self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n\n', 'utf-8'))
                     for line in f.readlines():
                         self.request.sendall((line))
-                    self.request.sendall(b'\n')
+                    self.request.sendall(b"")
             #if requested file does not exist, return 404 response
             except IOError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n")
-                self.request.sendall(b"Connection: close \n\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
                 self.request.sendall(b"<html><body>404 Page Not Found</body></html>\n")
             #if the request does not specify file type, return 404 response
             except IndexError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n")
-                self.request.sendall(b"Connection: close \n\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
                 self.request.sendall(b"<html><body>404 Wrong Name</body></html>\n")
             #if the request is a directory above /www, return 404 response
             except Exception:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n")
-                self.request.sendall(b"Connection: close \n\n")
+                self.request.sendall(b"Content-Type: text/html \n\n")
                 self.request.sendall(b"<html><body>404 Directory Not Allowed</body></html>\n")
             
         #return 405 response for any request that is not GET
         else:
             self.request.sendall(b"HTTP/1.1 405 Method Not Allowed\n")
-            self.request.sendall(b"Content-Type: text/html \n")
-            self.request.sendall(b"Connection: close \n\n")
+            self.request.sendall(b"Content-Type: text/html \n\n")
             self.request.sendall(b"<html><body>Method Not Allowed</body></html>\n")
 
 if __name__ == "__main__":
