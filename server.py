@@ -30,6 +30,7 @@ import socketserver
 
 class MyWebServer(socketserver.BaseRequestHandler):
 
+    #receives a request and sends back a response 
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
@@ -37,46 +38,60 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if req:
             req_type = req[0]
             req_addr = req[1]
-        else:
+        else: 
             req_type = ""
         if req_type == "GET":
+            #return index.html file if request is a directory
             if req_addr.endswith("/"):
                 path = os.getcwd() + "/www" + req_addr + "index.html"
+            #if request is /deep, redirect to /deep/
             elif req_addr == "/deep":
                 self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n")
                 self.request.sendall(b"Location: http://127.0.0.1:8080/deep/\n")
-                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"Content-Type: text/html \n")
+                self.request.sendall(b"Connection: close \n\n")
                 self.request.sendall(b"<html><body>Page Moved Permanently http://127.0.0.1:8080/deep/</body></html>\n")
+            #else, return request in /www directory
             else:
                 path = os.getcwd() + "/www" + req_addr
             try:
-                if "/../" in req_addr:
+                #blocks access of directories above /www
+                if req_addr.startswith("/.."):
                     raise Exception
+                #checks the filetype of the given request
                 filetype = path.split(".")[1]
                 with open(path , 'rb') as f:
+                    #sends a 200 http response header with content type header and body
                     self.request.sendall(b"HTTP/1.1 200 OK\n")
-                    self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n\n', 'utf-8'))
+                    self.request.sendall(bytearray(f'Content-Type: text/{filetype}\n', 'utf-8'))
+                    self.request.sendall(b"Connection: close \n\n")
                     for line in f.readlines():
                         self.request.sendall((line))
-                    f.close()
-        
+                    self.request.sendall(b'\n')
+            #if requested file does not exist, return 404 response
             except IOError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"Content-Type: text/html \n")
+                self.request.sendall(b"Connection: close \n\n")
                 self.request.sendall(b"<html><body>404 Page Not Found</body></html>\n")
+            #if the request does not specify file type, return 404 response
             except IndexError:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"Content-Type: text/html \n")
+                self.request.sendall(b"Connection: close \n\n")
                 self.request.sendall(b"<html><body>404 Wrong Name</body></html>\n")
+            #if the request is a directory above /www, return 404 response
             except Exception:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n")
-                self.request.sendall(b"Content-Type: text/html \n\n")
+                self.request.sendall(b"Content-Type: text/html \n")
+                self.request.sendall(b"Connection: close \n\n")
                 self.request.sendall(b"<html><body>404 Directory Not Allowed</body></html>\n")
             
-
-        elif req and req_type != "GET":
+        #return 405 response for any request that is not GET
+        else:
             self.request.sendall(b"HTTP/1.1 405 Method Not Allowed\n")
-            self.request.sendall(b"Content-Type: text/html \n\n")
+            self.request.sendall(b"Content-Type: text/html \n")
+            self.request.sendall(b"Connection: close \n\n")
             self.request.sendall(b"<html><body>Method Not Allowed</body></html>\n")
 
 if __name__ == "__main__":
